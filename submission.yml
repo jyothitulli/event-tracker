@@ -1,0 +1,122 @@
+# submission.yml
+# Event-Driven User Activity Service - Final Submission
+
+# Student Information
+student_name: "Durga"  # Replace with your full name
+student_email: "your.email@example.com"  # Replace with your email
+
+# Project Information
+project_name: "Event-Driven User Activity Service"
+project_description: "A microservices-based system for tracking user activities using Node.js, RabbitMQ, and MongoDB with IP-based rate limiting."
+
+# Repository
+github_repo: "https://github.com/jyothitulli/event-tracker"  # Replace with your GitHub URL
+
+# Demo Video (YouTube)
+# IMPORTANT: Make sure your video is set to "Unlisted" (not Private)
+demo_video_url: "https://youtu.be/NPQepVR2moU"  # <--- PASTE YOUR YOUTUBE LINK HERE
+
+# Project Details
+submission_date: "2026-03-07"
+environment:
+  os: "Windows 11"
+  docker_version: "24.0.7"
+  node_version: "18.20.8"
+  rabbitmq_version: "3.12-management"
+  mongodb_version: "8.0"
+
+# Architecture Overview
+architecture:
+  - "REST API (Port 3000) - Ingests user activities"
+  - "RabbitMQ - Message queue for decoupling"
+  - "Consumer Service - Async processing"
+  - "MongoDB - Persistent storage"
+  - "Docker - Container orchestration"
+
+# Features Implemented (✓ All Complete)
+features:
+  # API Endpoints
+  - "✓ POST /api/v1/activities - Accepts user activity events"
+  - "✓ GET /health - Health check endpoint"
+  
+  # Input Validation
+  - "✓ Validates userId (string, required)"
+  - "✓ Validates eventType (non-empty string, required)"
+  - "✓ Validates timestamp (ISO-8601 format, required)"
+  - "✓ Validates payload (JSON object, required)"
+  
+  # Response Handling
+  - "✓ 202 Accepted - Event successfully queued"
+  - "✓ 400 Bad Request - Invalid input with error messages"
+  - "✓ 404 Not Found - Invalid endpoints"
+  - "✓ 500 Internal Server Error - Server failures"
+  
+  # Rate Limiting
+  - "✓ IP-based rate limiting (50 requests per minute)"
+  - "✓ 429 Too Many Requests with Retry-After header"
+  - "✓ X-RateLimit-Limit, X-RateLimit-Remaining headers"
+  
+  # RabbitMQ Integration
+  - "✓ Durable queue 'user_activities'"
+  - "✓ Message persistence"
+  - "✓ Proper connection management"
+  - "✓ Automatic reconnection"
+  
+  # Consumer Service
+  - "✓ Separate microservice"
+  - "✓ Async message consumption"
+  - "✓ Proper message acknowledgment (ACK)"
+  - "✓ Retry logic for failed messages (3 attempts)"
+  - "✓ Error handling with dead letter queue"
+  
+  # Database
+  - "✓ MongoDB persistence"
+  - "✓ Flexible schema for payload"
+  - "✓ Indexes for performance"
+  - "✓ processedAt timestamp"
+  
+  # Docker Containerization
+  - "✓ Multi-service docker-compose"
+  - "✓ Individual Dockerfiles for API and Consumer"
+  - "✓ Health checks for all services"
+  - "✓ Volume management for data persistence"
+  - "✓ Network isolation"
+  
+  # Testing
+  - "✓ Rate limiting test script"
+  - "✓ API endpoint testing"
+  - "✓ End-to-end flow verification"
+
+# Test Results
+test_results:
+  api_health_check: "PASSED"
+  activity_creation: "PASSED"
+  rabbitmq_connection: "PASSED"
+  consumer_processing: "PASSED"
+  mongodb_persistence: "PASSED"
+  rate_limiting_50_per_minute: "PASSED"
+  rate_limiting_429_response: "PASSED"
+  docker_compose_startup: "PASSED"
+
+# Screenshots (add these to your repository)
+screenshots:
+  - "screenshots/rabbitmq-queue.png - Shows user_activities queue"
+  - "screenshots/mongodb-data.png - Shows stored activities"
+  - "screenshots/api-success.png - 202 response example"
+  - "screenshots/rate-limit-429.png - 429 response example"
+  - "screenshots/containers-healthy.png - All Docker containers running"
+
+# Time Tracking
+development_time_hours: 12
+challenges_faced:
+  - "WSL2 proxy configuration issues"
+  - "RabbitMQ health check configuration"
+  - "Docker network connectivity"
+  - "Rate limiting implementation"
+
+# Additional Notes
+notes: |
+  All core requirements have been successfully implemented.
+  The system handles 50 requests per minute with proper rate limiting,
+  processes messages asynchronously via RabbitMQ, and persists data in MongoDB.
+  Full Docker containerization ensures easy deployment and testing.

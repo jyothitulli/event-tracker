@@ -1,56 +1,97 @@
 /**
  * IP-based Rate Limiting Middleware
- * Limits: 50 requests per 60 seconds per IP
+ * Strictly limits to 50 requests per 60 seconds per IP
  */
 
 const rateLimit = require('express-rate-limit');
 
-// Create a store for rate limiting (in-memory)
+// In-memory store for more precise control
+const store = new Map();
+
+// Custom key generator
+const keyGenerator = (req) => {
+  return req.ip || req.connection.remoteAddress || req.socket.remoteAddress || 'unknown';
+};
+
+// Strict rate limiter with exact 50 count
 const rateLimiter = rateLimit({
-  windowMs: process.env.RATE_LIMIT_WINDOW_MS || 60 * 1000, // 1 minute default
-  max: process.env.RATE_LIMIT_MAX_REQUESTS || 50, // 50 requests per windowMs
+  windowMs: 60 * 1000, // 1 minute (60000 ms)
+  max: 50, // EXACTLY 50 requests per IP
   message: {
     error: 'Too many requests, please try again later.',
-    rateLimit: {
-      limit: process.env.RATE_LIMIT_MAX_REQUESTS || 50,
-      windowMs: process.env.RATE_LIMIT_WINDOW_MS || 60000
-    }
+    limit: 50,
+    windowMs: 60000,
+    retryAfter: 60
   },
   statusCode: 429,
-  headers: true, // Send rate limit info in headers
-  keyGenerator: (req) => {
-    // Use IP address as the key
-    return req.ip || req.connection.remoteAddress;
-  },
+  headers: true,
+  skipFailedRequests: false, // Count failed requests
+  skipSuccessfulRequests: false, // Count successful requests
+  keyGenerator,
+  
+  // Handle rate limit exceeded
   handler: (req, res, next, options) => {
-    // Calculate retry after time
     const retryAfter = Math.ceil(options.windowMs / 1000);
     
     res.setHeader('Retry-After', retryAfter);
+    res.setHeader('X-RateLimit-Limit', options.max);
+    res.setHeader('X-RateLimit-Remaining', 0);
+    
     res.status(options.statusCode).json({
-      error: 'Too many requests, please try again later.',
+      error: 'Rate limit exceeded. Maximum 50 requests per minute.',
       retryAfter: retryAfter,
       limit: options.max,
       windowMs: options.windowMs
     });
   },
-  skip: (req) => {
-    // Skip rate limiting for health checks
-    return req.path === '/health';
+  
+  // Skip health checks
+  skip: (req) => req.path === '/health',
+  
+  // Use custom store for better control
+  store: {
+    async increment(key) {
+      const now = Date.now();
+      const windowMs = 60 * 1000;
+      
+      if (!store.has(key)) {
+        store.set(key, []);
+      }
+      
+      const requests = store.get(key);
+      
+      // Clean old requests
+      const validRequests = requests.filter(time => now - time < windowMs);
+      validRequests.push(now);
+      
+      store.set(key, validRequests);
+      
+      return {
+        totalHits: validRequests.length,
+        resetTime: new Date(now + windowMs)
+      };
+    },
+    
+    async decrement(key) {
+      // Optional: implement if needed
+    },
+    
+    async resetKey(key) {
+      store.delete(key);
+    }
   }
 });
 
-// Export both configured limiter and a function to create custom limiters
+// Simplified version for testing
+const testLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 50,
+  message: 'Too many requests',
+  statusCode: 429,
+  headers: true
+});
+
 module.exports = {
   rateLimiter,
-  createLimiter: (windowMs, max) => rateLimit({
-    windowMs,
-    max,
-    message: {
-      error: 'Too many requests, please try again later.'
-    },
-    statusCode: 429,
-    headers: true,
-    keyGenerator: (req) => req.ip || req.connection.remoteAddress
-  })
+  testLimiter
 };
